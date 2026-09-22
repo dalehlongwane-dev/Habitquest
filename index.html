@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f12">
+<meta name="description" content="HabitQuest — turn your habits into a game.">
+<link rel="manifest" href="manifest.json">
+<title>HabitQuest</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{background:#0d0f12;color:#f0f4f8;display:flex;justify-content:center;min-height:100vh;padding:20px 15px}
+.app-container{width:100%;max-width:500px;display:flex;flex-direction:column;gap:20px}
+.profile-card,.section-card{background:#161a20;border:1px solid #282e38;border-radius:24px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.level-badge{background:linear-gradient(135deg,#6366f1,#a855f7);padding:6px 14px;border-radius:20px;font-weight:700;font-size:.9rem}
+.notif-btn{background:#232933;border:1px solid #374151;color:#9ca3af;padding:8px 12px;border-radius:12px;font-size:.8rem;cursor:pointer}
+.stat-bar-container{margin-bottom:12px}.stat-label{display:flex;justify-content:space-between;font-size:.85rem;font-weight:600;margin-bottom:6px}
+.bar-bg{height:12px;background:#232933;border-radius:10px;overflow:hidden}
+.bar-fill-hp{height:100%;background:linear-gradient(90deg,#ef4444,#f87171);transition:width .3s}
+.bar-fill-xp{height:100%;background:linear-gradient(90deg,#10b981,#34d399);transition:width .3s}
+.progress-section{background:#161a20;border:1px solid #282e38;border-radius:20px;padding:16px}
+.progress-title{display:flex;justify-content:space-between;margin-bottom:8px;font-weight:700}
+.progress-bg{height:14px;background:#232933;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#3b82f6,#8b5cf6);transition:width .3s}
+.progress-details{margin-top:8px;font-size:.78rem;color:#9ca3af}
+.controls{display:flex;flex-direction:column;gap:12px}
+.tab-group,.analytics-toggle{display:flex;background:#161a20;padding:4px;border-radius:16px;border:1px solid #282e38}
+.tab-btn,.analytics-btn{flex:1;padding:10px;border:none;background:transparent;color:#9ca3af;font-weight:600;border-radius:12px;cursor:pointer}
+.tab-btn.active,.analytics-btn.active{background:#232933;color:#fff}
+.add-habit-form{display:flex;gap:8px;flex-wrap:wrap}
+.add-habit-form input,.add-habit-form select{background:#161a20;border:1px solid #282e38;border-radius:16px;padding:12px 16px;color:#fff;outline:none}
+.add-habit-form input{flex:1;min-width:160px}.add-habit-form select{min-width:135px}
+.add-btn{background:#3b82f6;color:#fff;border:none;border-radius:16px;padding:0 18px;font-weight:600;cursor:pointer;min-height:44px}
+.habit-list{display:flex;flex-direction:column;gap:12px}
+.habit-card{background:#161a20;border:1px solid #282e38;border-radius:20px;padding:16px}
+.habit-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.habit-info h4{font-size:1rem;margin-bottom:5px}.habit-meta{font-size:.75rem;color:#9ca3af}
+.difficulty{padding:4px 8px;border-radius:8px;background:#232933;color:#fbbf24;font-size:.7rem;font-weight:700;white-space:nowrap}
+.streak-tag{display:block;font-size:.75rem;color:#f59e0b;font-weight:600;margin-top:5px}
+.action-btns{display:flex;gap:8px;margin-top:14px}
+.btn-action{flex:1;height:42px;border-radius:12px;border:none;font-weight:bold;cursor:pointer}
+.btn-check{background:#059669;color:#fff}.btn-cross{background:#dc2626;color:#fff}
+.completed-message{text-align:center;padding:10px;color:#9ca3af;font-size:.8rem}
+.section-title{font-size:1rem;font-weight:700;margin-bottom:15px}
+.analytics-toggle{margin-bottom:15px}canvas{width:100%;height:220px;background:#101318;border-radius:14px}
+.analytics-summary{display:flex;justify-content:space-between;margin-top:12px;gap:8px}
+.summary-box{flex:1;background:#232933;border-radius:12px;padding:10px;text-align:center}
+.summary-box strong{display:block;font-size:1rem}.summary-box span{color:#9ca3af;font-size:.7rem}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.calendar-header button{background:#232933;border:1px solid #374151;color:#fff;border-radius:8px;padding:5px 9px;cursor:pointer}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.calendar-day-name{text-align:center;font-size:.65rem;color:#6b7280;padding:4px}
+.calendar-day{min-height:38px;border-radius:8px;background:#232933;display:flex;align-items:center;justify-content:center;font-size:.7rem;position:relative}
+.calendar-day.good{background:#065f46}.calendar-day.average{background:#92400e}.calendar-day.bad{background:#7f1d1d}.calendar-day.today{border:2px solid #6366f1}
+.calendar-score{position:absolute;bottom:2px;font-size:.48rem;color:#d1d5db}
+.install-hint{font-size:.75rem;color:#9ca3af;line-height:1.4}
+@media(max-width:420px){.add-habit-form input,.add-habit-form select,.add-btn{width:100%;flex:1}}
+</style>
+</head>
+<body>
+<div class="app-container">
+<div class="profile-card">
+  <div class="header-top">
+    <div class="level-badge" id="levelDisplay">Level 1</div>
+    <button class="notif-btn" id="notifBtn" onclick="requestNotificationPermission()">🔔 Notifications</button>
+  </div>
+  <div class="stat-bar-container">
+    <div class="stat-label"><span style="color:#f87171">Health (HP)</span><span id="hpText"></span></div>
+    <div class="bar-bg"><div class="bar-fill-hp" id="hpBar"></div></div>
+  </div>
+  <div class="stat-bar-container">
+    <div class="stat-label"><span style="color:#34d399">Experience (XP)</span><span id="xpText"></span></div>
+    <div class="bar-bg"><div class="bar-fill-xp" id="xpBar"></div></div>
+  </div>
+</div>
+
+<div class="progress-section">
+  <div class="progress-title"><span>Today's Progress</span><span id="dailyProgressText">0%</span></div>
+  <div class="progress-bg"><div class="progress-fill" id="dailyProgressBar"></div></div>
+  <div class="progress-details" id="progressDetails"></div>
+</div>
+
+<div class="controls">
+  <div class="tab-group">
+    <button class="tab-btn active" id="tabGood" onclick="switchTab('good')">Good Habits</button>
+    <button class="tab-btn" id="tabBad" onclick="switchTab('bad')">Bad Habits</button>
+  </div>
+  <form class="add-habit-form" onsubmit="addHabit(event)">
+    <input type="text" id="habitInput" placeholder="Add a new habit..." required>
+    <select id="difficultyInput">
+      <option value="5">Easy — 5 HP</option>
+      <option value="10" selected>Medium — 10 HP</option>
+      <option value="15">Hard — 15 HP</option>
+    </select>
+    <button type="submit" class="add-btn">Add</button>
+  </form>
+</div>
+
+<div class="habit-list" id="habitList"></div>
+
+<div class="section-card">
+  <div class="section-title">📊 Analytics</div>
+  <div class="analytics-toggle">
+    <button class="analytics-btn active" id="analyticsDaily" onclick="changeAnalytics('daily')">Daily</button>
+    <button class="analytics-btn" id="analyticsWeekly" onclick="changeAnalytics('weekly')">Weekly</button>
+    <button class="analytics-btn" id="analyticsMonthly" onclick="changeAnalytics('monthly')">Monthly</button>
+  </div>
+  <canvas id="analyticsChart"></canvas>
+  <div class="analytics-summary">
+    <div class="summary-box"><strong id="averageValue">0%</strong><span>Average</span></div>
+    <div class="summary-box"><strong id="bestValue">0%</strong><span>Best</span></div>
+    <div class="summary-box"><strong id="daysTracked">0</strong><span>Days</span></div>
+  </div>
+</div>
+
+<div class="section-card">
+  <div class="section-title">📅 Progress Calendar</div>
+  <div class="calendar-header">
+    <button onclick="changeMonth(-1)">‹</button>
+    <strong id="calendarMonth"></strong>
+    <button onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+</div>
+
+<div class="section-card">
+  <div class="section-title">📱 App</div>
+  <div class="install-hint" id="installHint">
+    HabitQuest can be installed from your browser's menu once this site is hosted over HTTPS.
+  </div>
+</div>
+</div>
+
+<script>
+const savedState=localStorage.getItem("habitQuestState");
+let state=savedState?JSON.parse(savedState):{
+ level:1,hp:85,maxHp:100,xp:45,maxXp:100,currentTab:"good",
+ analyticsMode:"daily",calendarDate:new Date().toISOString(),history:{},
+ habits:[
+  {id:1,name:"Jump Rope & Calisthenics",type:"good",difficulty:15,streak:4},
+  {id:2,name:"Acoustic Guitar Practice",type:"good",difficulty:10,streak:2},
+  {id:3,name:"Late Night Screen Time",type:"bad",difficulty:15,streak:1},
+  {id:4,name:"Unnecessary Snacking",type:"bad",difficulty:10,streak:0},
+  {id:5,name:"Skipping Water",type:"bad",difficulty:5,streak:0}
+ ]
+};
+
+function dateKey(date=new Date()){return new Date(date).toISOString().split("T")[0]}
+function saveState(){localStorage.setItem("habitQuestState",JSON.stringify(state))}
+function getTodayRecord(){
+ const today=dateKey();
+ if(!state.history[today])state.history[today]={actions:{},score:0,completedGood:0,completedBad:0};
+ return state.history[today];
+}
+
+function render(){
+ document.getElementById("levelDisplay").innerText=`Level ${state.level}`;
+ document.getElementById("hpText").innerText=`${Math.round(state.hp)} / ${state.maxHp}`;
+ document.getElementById("hpBar").style.width=`${Math.max(0,Math.min(100,state.hp/state.maxHp*100))}%`;
+ document.getElementById("xpText").innerText=`${Math.round(state.xp)} / ${state.maxXp}`;
+ document.getElementById("xpBar").style.width=`${Math.max(0,Math.min(100,state.xp/state.maxXp*100))}%`;
+ renderHabits();updateDailyProgress();renderAnalytics();renderCalendar();saveState();
+}
+
+function renderHabits(){
+ const list=document.getElementById("habitList");list.innerHTML="";
+ const filtered=state.habits.filter(h=>h.type===state.currentTab);
+ if(!filtered.length){list.innerHTML=`<div class="section-card">No ${state.currentTab} habits yet.</div>`;return}
+ const record=getTodayRecord();
+ filtered.forEach(habit=>{
+  const card=document.createElement("div");card.className="habit-card";
+  const answered=record.actions[habit.id]!==undefined;
+  const difficultyLabel=habit.difficulty===15?"Hard":habit.difficulty===10?"Medium":"Easy";
+  card.innerHTML=`
+   <div class="habit-top"><div class="habit-info">
+   <h4>${escapeHtml(habit.name)}</h4>
+   <div class="habit-meta">${habit.type==="good"?"Good habit":"Bad habit"} • ${habit.difficulty} HP</div>
+   <span class="streak-tag">🔥 ${habit.streak} day streak</span>
+   </div><span class="difficulty">${difficultyLabel}</span></div>
+   ${answered?`<div class="completed-message">✓ Answer saved for today</div>`:
+   `<div class="action-btns">
+    <button class="btn-action btn-check" onclick="handleAction(${habit.id},true)">✓ Did It</button>
+    <button class="btn-action btn-cross" onclick="handleAction(${habit.id},false)">✕ Didn't</button>
+   </div>`}`;
+  list.appendChild(card);
+ });
+}
+
+function switchTab(tab){state.currentTab=tab;document.getElementById("tabGood").classList.toggle("active",tab==="good");document.getElementById("tabBad").classList.toggle("active",tab==="bad");renderHabits()}
+
+function addHabit(e){
+ e.preventDefault();const input=document.getElementById("habitInput"),difficulty=Number(document.getElementById("difficultyInput").value);
+ state.habits.push({id:Date.now(),name:input.value.trim(),type:state.currentTab,difficulty,streak:0});
+ input.value="";render();
+}
+
+function handleAction(id,positiveOutcome){
+ const habit=state.habits.find(h=>h.id===id);if(!habit)return;
+ const record=getTodayRecord();if(record.actions[habit.id]!==undefined)return;
+ record.actions[habit.id]=positiveOutcome;
+ const value=Number(habit.difficulty);
+
+ if(habit.type==="good"){
+  if(positiveOutcome){state.hp=Math.min(state.maxHp,state.hp+value);state.xp+=value;habit.streak++;record.completedGood++}
+  else{state.hp=Math.max(0,state.hp-value);state.xp=Math.max(0,state.xp-value);habit.streak=0}
+ }else{
+  if(positiveOutcome){state.hp=Math.max(0,state.hp-value);state.xp=Math.max(0,state.xp-value);habit.streak=0;record.completedBad++}
+  else{state.hp=Math.min(state.maxHp,state.hp+value);habit.streak++}
+ }
+ checkLevelUp();calculateDailyScore();render();
+}
+
+function checkLevelUp(){
+ while(state.xp>=state.maxXp){state.xp-=state.maxXp;state.level++;state.hp=state.maxHp}
+}
+
+function calculateDailyScore(){
+ const record=getTodayRecord();
+ const good=state.habits.filter(h=>h.type==="good"),bad=state.habits.filter(h=>h.type==="bad");
+ let score=0;
+ if(good.length)good.forEach(h=>{if(record.actions[h.id]===true)score+=100/good.length});
+ if(bad.length)bad.forEach(h=>{if(record.actions[h.id]===true)score-=100/bad.length});
+ record.score=Math.round(Math.max(0,Math.min(100,score))*10)/10;return record.score;
+}
+
+function updateDailyProgress(){
+ const score=calculateDailyScore(),record=getTodayRecord();
+ document.getElementById("dailyProgressText").innerText=`${score}%`;
+ document.getElementById("dailyProgressBar").style.width=`${score}%`;
+ document.getElementById("progressDetails").innerText=`${Object.keys(record.actions).length} / ${state.habits.length} habits answered today`;
+}
+
+async function requestNotificationPermission(){
+ if(!("Notification" in window)){alert("Notifications are not supported by this browser.");return}
+ try{
+  const permission=await Notification.requestPermission();
+  if(permission==="granted"){
+   document.getElementById("notifBtn").innerText="🔔 Notifications On";
+   await registerServiceWorker();
+   localStorage.setItem("habitQuestNotifications","enabled");
+   alert("Notifications enabled. Keep HabitQuest installed and allow notifications in Android settings.");
+  }else alert("Notification permission was not granted.");
+ }catch(e){alert("Could not enable notifications: "+e.message)}
+}
+
+async function registerServiceWorker(){
+ if(!("serviceWorker" in navigator))return null;
+ return await navigator.serviceWorker.register("./service-worker.js");
+}
+
+function sendEndOfDayNotification(){
+ if("Notification" in window&&Notification.permission==="granted"){
+  const score=calculateDailyScore();
+  if("serviceWorker" in navigator&&navigator.serviceWorker.controller){
+   navigator.serviceWorker.controller.postMessage({type:"DAILY_NOTIFICATION",score});
+  }else new Notification("HabitQuest — Daily Check-in",{body:`Your progress today is ${score}%. Don't forget your habits!`,icon:"./icons/icon-192.png"});
+ }
+}
+
+/* Page-open fallback: checks at 21:00. */
+function startReminderChecker(){
+ let lastReminder="";
+ setInterval(()=>{
+  const now=new Date(),key=dateKey()+"-21";
+  if(now.getHours()===21&&now.getMinutes()===0&&lastReminder!==key){
+   lastReminder=key;sendEndOfDayNotification();
+  }
+ },30000);
+}
+
+function changeAnalytics(mode){
+ state.analyticsMode=mode;
+ document.querySelectorAll(".analytics-btn").forEach(b=>b.classList.remove("active"));
+ document.getElementById("analytics"+mode.charAt(0).toUpperCase()+mode.slice(1)).classList.add("active");
+ renderAnalytics();
+}
+function getLastDays(number){
+ const result=[];for(let i=number-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const key=dateKey(d);result.push({key,score:state.history[key]?state.history[key].score:0})}return result;
+}
+function getWeeklyData(){
+ const result=[];for(let i=7;i>=0;i--){const end=new Date();end.setDate(end.getDate()-i*7);let total=0,count=0;
+  for(let d=0;d<7;d++){const date=new Date(end);date.setDate(date.getDate()+d);const r=state.history[dateKey(date)];if(r){total+=r.score;count++}}
+  result.push({key:`Week ${8-i}`,score:count?total/count:0});
+ }return result;
+}
+function getMonthlyData(){
+ const result=[],now=new Date();
+ for(let i=5;i>=0;i--){const date=new Date(now.getFullYear(),now.getMonth()-i,1),year=date.getFullYear(),month=date.getMonth();let total=0,count=0;
+  Object.keys(state.history).forEach(key=>{const d=new Date(key);if(d.getFullYear()===year&&d.getMonth()===month){total+=state.history[key].score;count++}});
+  result.push({key:date.toLocaleString("default",{month:"short"}),score:count?total/count:0});
+ }return result;
+}
+function renderAnalytics(){
+ let data=state.analyticsMode==="daily"?getLastDays(14):state.analyticsMode==="weekly"?getWeeklyData():getMonthlyData();
+ drawChart(data);const values=data.map(d=>d.score),tracked=values.filter(v=>v>0),avg=tracked.length?tracked.reduce((a,b)=>a+b,0)/tracked.length:0,best=tracked.length?Math.max(...tracked):0;
+ document.getElementById("averageValue").innerText=`${Math.round(avg)}%`;
+ document.getElementById("bestValue").innerText=`${Math.round(best)}%`;
+ document.getElementById("daysTracked").innerText=tracked.length;
+}
+function drawChart(data){
+ const canvas=document.getElementById("analyticsChart"),ctx=canvas.getContext("2d"),width=canvas.clientWidth,height=canvas.clientHeight,ratio=window.devicePixelRatio||1;
+ canvas.width=width*ratio;canvas.height=height*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,width,height);if(!data.length)return;
+ const padding=25,cw=width-padding*2,ch=height-padding*2;
+ ctx.strokeStyle="#2a303a";ctx.lineWidth=1;
+ for(let i=0;i<=4;i++){const y=padding+ch-(ch/4)*i;ctx.beginPath();ctx.moveTo(padding,y);ctx.lineTo(width-padding,y);ctx.stroke()}
+ ctx.strokeStyle="#6366f1";ctx.lineWidth=3;ctx.beginPath();
+ data.forEach((p,i)=>{const x=data.length===1?width/2:padding+(cw/(data.length-1))*i,y=padding+ch-(Math.max(0,Math.min(100,p.score))/100)*ch;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+ ctx.fillStyle="#818cf8";data.forEach((p,i)=>{const x=data.length===1?width/2:padding+(cw/(data.length-1))*i,y=padding+ch-(Math.max(0,Math.min(100,p.score))/100)*ch;ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill()});
+}
+function changeMonth(direction){const d=new Date(state.calendarDate);d.setMonth(d.getMonth()+direction);state.calendarDate=d.toISOString();renderCalendar()}
+function renderCalendar(){
+ const grid=document.getElementById("calendarGrid");grid.innerHTML="";const date=new Date(state.calendarDate),year=date.getFullYear(),month=date.getMonth();
+ document.getElementById("calendarMonth").innerText=date.toLocaleString("default",{month:"long",year:"numeric"});
+ ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(day=>{const e=document.createElement("div");e.className="calendar-day-name";e.innerText=day;grid.appendChild(e)});
+ const first=new Date(year,month,1).getDay(),days=new Date(year,month+1,0).getDate();
+ for(let i=0;i<first;i++)grid.appendChild(document.createElement("div"));
+ for(let day=1;day<=days;day++){
+  const current=new Date(year,month,day),key=dateKey(current),record=state.history[key],cell=document.createElement("div");cell.className="calendar-day";
+  if(record){if(record.score>=80)cell.classList.add("good");else if(record.score>=40)cell.classList.add("average");else cell.classList.add("bad")}
+  if(key===dateKey())cell.classList.add("today");
+  cell.innerHTML=`${day}${record?`<span class="calendar-score">${Math.round(record.score)}%</span>`:""}`;grid.appendChild(cell);
+ }
+}
+function escapeHtml(text){const div=document.createElement("div");div.textContent=text;return div.innerHTML}
+
+window.addEventListener("resize",renderAnalytics);
+
+(async function init(){
+ if("serviceWorker" in navigator){
+  try{await registerServiceWorker()}catch(e){console.warn("Service worker registration failed",e)}
+ }
+ if("Notification" in window&&Notification.permission==="granted")document.getElementById("notifBtn").innerText="🔔 Notifications On";
+ startReminderChecker();
+ render();
+})();
+</script>
+</body>
+</html>
